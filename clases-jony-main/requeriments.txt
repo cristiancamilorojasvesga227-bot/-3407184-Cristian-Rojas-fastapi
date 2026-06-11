@@ -1,6 +1,0 @@
-#pasos de  el entorno virtual:
-1. en la terminal coloca:
-python -m venv venv
-venv\scriptsactivate
-pip install "fastapi[standard]"
-fastapi dev main.py
