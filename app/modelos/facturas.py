@@ -1,8 +1,12 @@
+from __future__ import annotations
+
+from datetime import datetime
+from typing import List
+
 from pydantic import BaseModel, computed_field
 
-from .transacciones import Transaccion
 from .clientes import Cliente
-from datetime import datetime
+from .transacciones import Transaccion
 
 # El decorador @property proviene de Python y sirve para convertir un método de una clase en una propiedad de solo lectura.
 # Validación Pydantic v2, @computed_field es un decorador que te permite definir propiedades o métodos que se calculan dinámicamente a partir de otros campos y se incluyen automáticamente en la respuesta JSON de tu API
@@ -10,9 +14,9 @@ from datetime import datetime
 
 # Crear el modelo transacciones(id, fecha, vr_total, cliente)
 class FacturaBase(BaseModel):
-    fecha: str = datetime.now()
-    cliente: Cliente  # esta es la relacion con el cliente(objeto)
-    transacciones: list[Transaccion] = []
+    fecha: datetime = datetime.now()
+    cliente: Cliente
+    transacciones: List[Transaccion] = []
 
     @computed_field
     @property
