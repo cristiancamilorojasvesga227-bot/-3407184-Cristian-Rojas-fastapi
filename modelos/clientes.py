@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 
+# Crear el modelo clientes(id, nombre, email, descripcion)
 class ClienteBase(BaseModel):
     nombre: str
     email: str
@@ -8,6 +9,10 @@ class ClienteBase(BaseModel):
 
 
 class ClienteCrear(ClienteBase):
+    pass
+
+
+class ClienteEditar(ClienteBase):
     pass
 
 
