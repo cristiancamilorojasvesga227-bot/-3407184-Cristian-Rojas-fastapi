@@ -2,30 +2,27 @@ from fastapi import APIRouter, HTTPException, status
 from ..modelos.transacciones import Transaccion, TransaccionCrear, TransaccionEditar
 from ..modelos.facturas import Factura
 from ..listas import lista_facturas, lista_transacciones
+from ..conexion_bd import Sesion_dependencia
+from sqlmodel import select
 
 rutas_transacciones = APIRouter()
-
 
 # lista_facturas: list[Factura] = []
 # lista_transacciones: list[Transaccion] = []
 
 @rutas_transacciones.get("/transacciones", response_model=list[Transaccion])
-async def listar_transacciones():
-    return lista_transacciones
-
-
-@rutas_transacciones.get("/transacciones/{id_transaccion}", response_model=Transaccion)
-async def listar_transaccion(id_transaccion: int):
-    pass
-
+async def listar_transacciones(sesion: Sesion_dependencia):
+    # consulta = select(Transaccion)
+    # lista_transacciones = sesion.exec(consulta).all()
+    # return lista_transacciones
+    return sesion.exec(select(Transaccion)).all()
 
 @rutas_transacciones.post("/transacciones/{factura_id}", response_model=Transaccion)
-async def crear_transaccion(factura_id: int, datos_transaccion: TransaccionCrear):
+async def crear_transaccion(
+    factura_id: int, datos_transaccion: TransaccionCrear, sesion: Sesion_dependencia
+):
     # buscar el factura
-    factura_encontrada = None
-    for factura in lista_facturas:
-        if factura.id == factura_id:
-            factura_encontrada = factura
+    factura_encontrada = sesion.get(Factura, factura_id)
     # mensaje si no existe el factura
     if not factura_encontrada:
         raise HTTPException(
@@ -33,14 +30,14 @@ async def crear_transaccion(factura_id: int, datos_transaccion: TransaccionCrear
             detail=f"La Factura con id {factura_id}, no existe.",
         )
 
-    # validar datos de la transaccion
-    transaccion_val = Transaccion.model_validate(datos_transaccion.model_dump())
-    transaccion_val.factura_id = factura_id
-    factura_encontrada.transacciones.append(transaccion_val)
-    # id de la transaccion
-    transaccion_val.id = len(lista_transacciones) + 1
-    # falto agregar a la lista de transacciones
-    lista_transacciones.append(transaccion_val)
+    # validar datos de la transaccion -json y pasamoa a dict
+    transaccion_dict = datos_transaccion.model_dump()
+    transaccion_dict["factura_id"] = factura_id
+    transaccion_val = Transaccion.model_validate(transaccion_dict)
+    # guardar en BD
+    sesion.add(transaccion_val)
+    sesion.commit()
+    sesion.refresh(transaccion_val)
     return transaccion_val
 
 
