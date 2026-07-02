@@ -59,11 +59,14 @@ async def editar_cliente(
 
 # endpoint eliminar cliente
 @rutas_clientes.delete("/clientes/{cliente_id}", response_model=Cliente)
-async def eliminar_cliente(cliente_id: int):
-    for i, obj_cliente in enumerate(lista_clientes):
-        if obj_cliente.id == cliente_id:
-            cliente_eliminado = lista_clientes.pop(i)
-            return cliente_eliminado
-    raise HTTPException(
-        status_code=400, detail=f"El cliente con id {cliente_id}, no existe."
-    )
+async def eliminar_cliente(cliente_id: int, mi_sesion: Sesion_dependencia):
+    cliente_bd = mi_sesion.get(Cliente, cliente_id)
+    if not cliente_bd:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"El  cliente con id {cliente_id}, no existe.",
+        )
+    mi_sesion.delete(cliente_bd)
+    mi_sesion.commit()
+    # retornar un mensaje, deben quitar el response_model
+    return cliente_bd
