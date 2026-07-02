@@ -1,7 +1,7 @@
 from pydantic import BaseModel, computed_field
 from sqlmodel import SQLModel, Field, Relationship
 from .transacciones import Transaccion
-from .clientes import Cliente
+from .clientes import Cliente, ClienteLeer
 from datetime import datetime
 
 # El decorador @property proviene de Python y sirve para convertir un método de una clase en una propiedad de solo lectura.
@@ -14,24 +14,6 @@ class FacturaBase(SQLModel):
     #cliente: Cliente  # esta es la relacion con el cliente(objeto)
     #transacciones: list[Transaccion] = []
 
-    
-    @property
-    def vr_total(self) -> float:
-        # calcular(cantidad * vr_unitario)
-        # consultar el id actual de factura
-        # factura_id_actual = getattr(self, "id", None)
-        # total_factura = 0.0
-        # if not factura_id_actual or not self.transacciones:
-        #     return total_factura
-        # # recorrer la lista de transacciones, segun el factura_id
-        # for transaccion in self.transacciones:
-        #     if transaccion.factura_id == factura_id_actual:
-        #         total_factura += transaccion.vr_unitario * transaccion.cantidad
-
-        return 0.0
-    
-
-
 
 class FacturaCrear(FacturaBase):
     pass
@@ -43,4 +25,29 @@ class FacturaEditar(FacturaBase):
 
 class Factura(FacturaBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    cliente_id: int = Field(default=None, foreign_key="cliente.id")
+    cliente_id: int | None = Field(default=None, foreign_key="cliente.id")
+    cliente: Cliente = Relationship(back_populates="factura")
+    transacciones: list[Transaccion] = Relationship(back_populates="factura")
+
+    @computed_field
+    @property
+    def vr_total(self) -> float:
+        total_factura = 0.0
+        if self.transacciones == None:
+            return total_factura
+        # # recorrer la lista de transacciones, segun el factura_id
+        for transaccion in self.transacciones:
+            total_factura += transaccion.vr_unitario * transaccion.cantidad
+        return total_factura
+
+
+# crea modelo para mostrar la usuario o el cliente
+class FacturaLeer(FacturaBase):
+    id: int
+    cliente: ClienteLeer
+    # pero no es recomendable, por la buenas practicas
+    # transacciones: list[Transaccion] = []
+
+
+class FacturaLeerCompuesta(FacturaLeer):
+    transacciones: list[Transaccion] = []
